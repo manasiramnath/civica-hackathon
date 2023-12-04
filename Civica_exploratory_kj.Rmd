@@ -1,0 +1,213 @@
+---
+title: "Civica_Exploratory"
+author: "William Scheffler"
+date: '2023-12-04'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+civica <- read.csv("manifesto.csv")
+
+# Create a separate dataframe for just Norway, Sweden and Denmark
+civica_subset <- dplyr::filter(civica, countryname == "Norway" | countryname == "Sweden" | countryname == "Denmark")
+
+# Identify target variables
+vars <- c("countryname", "date", "edate", "partyname", "partyabbrev", "pervote","rile", "per108", "per110", "per601", "per607", "per608", "per7062", "per601_2", "per602_2", "per607_2", "per608_2")
+
+# Select only variables of interest
+civica_subset <- civica_subset %>% select(all_of(vars))
+
+civica_subset$imm_pos <- civica_subset$per602_2-civica_subset$per601_2
+
+#per602_2 immigration negative
+combined_civica <- civica_subset %>%
+  select(countryname, partyname, edate, imm_pos, pervote, rile) 
+```
+
+```{r}
+sweden <- dplyr::filter(combined_civica, countryname == "Sweden")
+norway <- dplyr::filter(combined_civica, countryname == "Norway")
+denmark <- dplyr::filter(combined_civica, countryname == "Denmark")
+
+ggplot(sweden, aes(x = pervote, y = imm_pos, color = partyname)) +
+  geom_point() +
+  facet_wrap(~ifelse("14/09/2014", "pre", "post"), scales = "free") +
+  labs(title = "Scatter Plot of Votes vs Immigration Opinions",
+       x = "Percentage of Votes",
+       y = "Immigration Opinions",
+       color = "Party") +
+  theme_minimal()
+
+# Assuming df is your data frame
+# Replace 'df' with your actual data frame name
+
+# Correlation for 2014
+cor_2014_s <- cor(sweden$imm_pos[sweden$edate == "14/09/2014"], sweden$rile[sweden$edate == "14/09/2014"])
+cor_2014_votes_s <- cor(sweden$imm_pos[sweden$edate == "14/09/2014"], sweden$pervote[sweden$edate == "14/09/2014"])
+
+# Correlation for 2018
+cor_2018_s <- cor(sweden$imm_pos[sweden$edate == "09/09/2018"], sweden$rile[sweden$edate == "09/09/2018"])
+cor_2018_votes_s <- cor(sweden$imm_pos[sweden$edate == "09/09/2018"], sweden$pervote[sweden$edate == "09/09/2018"])
+
+# Correlation for 2013
+cor_2014_n <- cor(norway$imm_pos[norway$edate == "09/09/2013"], norway$rile[norway$edate == "09/09/2013"])
+cor_2014_votes_n <- cor(norway$imm_pos[norway$edate == "09/09/2013"], norway$pervote[norway$edate == "09/09/2013"])
+
+# Correlation for 2017
+cor_2018_n <- cor(norway$imm_pos[norway$edate == "11/09/2017"], norway$rile[norway$edate == "11/09/2017"])
+cor_2018_votes_n <- cor(norway$imm_pos[norway$edate == "11/09/2017"], norway$pervote[norway$edate == "11/09/2017"])
+
+# Correlation for 2014
+cor_2014_d <- cor(denmark$imm_pos[denmark$edate == "18/06/2015"], denmark$rile[denmark$edate == "18/06/2015"])
+cor_2014_votes_d <- cor(denmark$imm_pos[denmark$edate == "18/06/2015"], denmark$pervote[denmark$edate == "18/06/2015"])
+
+# Correlation for 2018
+cor_2018_d <- cor(denmark$imm_pos[denmark$edate == "05/06/2019"], denmark$rile[denmark$edate == "05/06/2019"])
+cor_2018_votes_d <- cor(denmark$imm_pos[denmark$edate == "05/06/2019"], denmark$pervote[denmark$edate == "05/06/2019"])
+```
+
+
+```{r}
+# Assuming cor_2014, cor_2018, cor_2014_votes, cor_2018_votes are your correlation coefficients
+# Replace them with the actual correlation coefficients you obtained
+
+library(knitr)
+library(kableExtra)
+# Create a data frame with correlation results
+# Assuming cor_2014, cor_2018, cor_2014_votes, cor_2018_votes are your correlation coefficients
+# Replace them with the actual correlation coefficients you obtained
+
+# Create a data frame with correlation results
+correlation_data_s <- data.frame(
+  Variable = c("Immigration vs Ideology (2014)", "Immigration vs Ideology (2018)", 
+               "Immigration vs Votes (2014)", "Immigration vs Votes (2018)"),
+  Correlation = c(cor_2014_s, cor_2018_s, cor_2014_votes_s, cor_2018_votes_s)
+)
+
+# Create a table using kable and kableExtra for formatting
+sweden <- correlation_data_s %>%
+  kable("markdown", col.names = c("Variable", "Correlation"),caption = "Sweden", align = "c") %>%
+  kable_styling()
+# Print the table
+print(sweden)
+
+correlation_data_n <- data.frame(
+  Variable = c("Immigration vs Ideology (2014)", "Immigration vs Ideology (2018)", 
+               "Immigration vs Votes (2014)", "Immigration vs Votes (2018)"),
+  Correlation = c(cor_2014_n, cor_2018_n, cor_2014_votes_n, cor_2018_votes_n)
+)
+
+# Create a table using kable and kableExtra for formatting
+norway <- correlation_data_n %>%
+  kable("markdown", col.names = c("Variable", "Correlation"),caption = "Norway", align = "c") %>%
+  kable_styling()
+# Print the table
+print(norway)
+
+
+correlation_data_d <- data.frame(
+  Variable = c("Immigration vs Ideology (2014)", "Immigration vs Ideology (2018)", 
+               "Immigration vs Votes (2014)", "Immigration vs Votes (2018)"),
+  Correlation = c(cor_2014_d, cor_2018_d, cor_2014_votes_d, cor_2018_votes_d)
+)
+
+# Create a table using kable and kableExtra for formatting
+denmark <- correlation_data_d %>%
+  kable("markdown", col.names = c("Variable", "Correlation"),caption = "Denmark", align = "c") %>%
+  kable_styling()
+# Print the table
+print(denmark)
+
+
+```
+
+```{r}
+#new variable
+#positive>negative -> 1, negative>positive -> 0
+
+civica_subset$imm_pos <- civica_subset$per602_2-civica_subset$per601_2
+
+subset_table <- civica_subset[complete.cases(civica_subset$imm_pos), ]
+
+# View the resulting table
+#print(subset_table)
+
+sweden <- dplyr::filter(subset_table, countryname == "Sweden")
+norway <- dplyr::filter(subset_table, countryname == "Norway")
+denmark <- dplyr::filter(subset_table, countryname == "Denmark")
+```
+
+
+```{r}
+library(tidyverse)
+# Assuming your data is stored in a data frame named df
+# Replace 'df' with your actual data frame name
+
+sweden_pivot <- sweden %>%
+  select(partyname, edate, imm_pos) %>%
+  pivot_wider(names_from = edate, values_from = imm_pos)
+
+# Rename columns
+names(sweden_pivot) <-  c("partyname" = "Party",
+                          "14/09/2014" = "Pre", 
+                         "09/09/2018" = "Post")
+
+norway_pivot <- norway %>%
+  select(partyname, edate, imm_pos) %>%
+  pivot_wider(names_from = edate, values_from = imm_pos)
+
+names(norway_pivot) <-  c("partyname" = "Party",
+                          "09/09/2013" = "Pre", 
+                         "11/09/2017" = "Post")
+
+denmark_pivot <- denmark %>%
+  select(partyname, edate, imm_pos) %>%
+  pivot_wider(names_from = edate, values_from = imm_pos)
+
+names(denmark_pivot) <-  c("partyname" = "Party",
+                           "18/06/2015" = "Pre", 
+                         "05/06/2016" = "Post")
+```
+
+```{r}
+library(ggplot2)
+
+# Assuming df is your data frame
+# Replace 'df' with your actual data frame name
+
+# Plotting
+ggplot(sweden_pivot, aes(x = Pre, y = Post, color = Party)) +
+  geom_point() +
+  labs(title = "Scatter Plot of Parties (pre vs post)",
+       x = "Pre",
+       y = "Post") +
+  theme_minimal()
+```
+
+```{r}
+library(ggplot2)
+
+# Assuming df1, df2, and df3 are your three data frames
+# Replace 'df1', 'df2', 'df3' with your actual data frame names
+
+# Combine the three data frames into one
+combined_df <- bind_rows(
+  mutate(sweden_pivot, table = "Sweden"),
+  mutate(norway_pivot, table = "Norway"),
+  mutate(denmark_pivot, table = "Denmark")
+)
+
+ggplot(combined_df, aes(x = Pre, y = Post, fill = as.factor(table))) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  labs(title = "Comparison of Parties Across Tables",
+       x = "Party",
+       y = "Value") +
+  theme_minimal()
+```
+
