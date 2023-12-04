@@ -1,0 +1,25 @@
+---
+title: "Civica_Exploratory"
+author: "William Scheffler"
+date: '2023-12-04'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+civica <- read.csv("manifesto.csv")
+
+# Create a separate dataframe for just Norway, Sweden and Denmark
+civica_subset <- dplyr::filter(civica, countryname == "Norway" | countryname == "Sweden" | countryname == "Denmark")
+
+# Identify target variables
+vars <- c("countryname", "date", "edate", "partyname", "partyabbrev", "per108", "per110", "per601", "per607", "per608", "per7062", "per601_2", "per602_2", "per607_2", "per608_2")
+
+# Select only variables of interest
+civica_subset <- civica_subset %>% select(all_of(vars))
+```
