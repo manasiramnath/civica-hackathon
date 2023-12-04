@@ -1,0 +1,14 @@
+---
+title: "manifesto_analysis"
+output: html_document
+date: "2023-12-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+manifesto <- read_csv('manifesto.csv')
+```
+
