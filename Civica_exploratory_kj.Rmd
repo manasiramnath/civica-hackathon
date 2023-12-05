@@ -91,11 +91,11 @@ correlation_data_s <- data.frame(
 )
 
 # Create a table using kable and kableExtra for formatting
-sweden <- correlation_data_s %>%
+sweden_cor <- correlation_data_s %>%
   kable("markdown", col.names = c("Variable", "Correlation"),caption = "Sweden", align = "c") %>%
   kable_styling()
 # Print the table
-print(sweden)
+print(sweden_cor)
 
 correlation_data_n <- data.frame(
   Variable = c("Immigration vs Ideology (2014)", "Immigration vs Ideology (2018)", 
@@ -104,11 +104,11 @@ correlation_data_n <- data.frame(
 )
 
 # Create a table using kable and kableExtra for formatting
-norway <- correlation_data_n %>%
+norway_cor <- correlation_data_n %>%
   kable("markdown", col.names = c("Variable", "Correlation"),caption = "Norway", align = "c") %>%
   kable_styling()
 # Print the table
-print(norway)
+print(norway_cor)
 
 
 correlation_data_d <- data.frame(
@@ -118,96 +118,162 @@ correlation_data_d <- data.frame(
 )
 
 # Create a table using kable and kableExtra for formatting
-denmark <- correlation_data_d %>%
+denmark_cor <- correlation_data_d %>%
   kable("markdown", col.names = c("Variable", "Correlation"),caption = "Denmark", align = "c") %>%
   kable_styling()
 # Print the table
-print(denmark)
+print(denmark_cor)
 
 
 ```
-
 ```{r}
-#new variable
-#positive>negative -> 1, negative>positive -> 0
+#T-tests:
+#Sweden
+sweden$binary <- ifelse(sweden$imm_pos>0, 1, 0)
 
-civica_subset$imm_pos <- civica_subset$per602_2-civica_subset$per601_2
+# Assuming imm_pos is a binary variable
+#t_test_2014_s <- t.test(pervote ~ binary, data = sweden[sweden$edate == "14/09/2014", ])
+# T-test for 2018
+t_test_2018_s <- t.test(sweden$pervote[sweden$edate == "09/09/2018"] ~ sweden$binary[sweden$edate == "09/09/2018"])
 
-subset_table <- civica_subset[complete.cases(civica_subset$imm_pos), ]
+# Display t-test results
+print("T-test for 2014, Sweden: Not enough data")
+#print(t_test_2014_s)
 
-# View the resulting table
-#print(subset_table)
+print("\nT-test for 2018, Sweden:")
+print(t_test_2018_s)
 
-sweden <- dplyr::filter(subset_table, countryname == "Sweden")
-norway <- dplyr::filter(subset_table, countryname == "Norway")
-denmark <- dplyr::filter(subset_table, countryname == "Denmark")
+norway$binary <- ifelse(norway$imm_pos>0, 1, 0)
+
+t_test_2014_n <- t.test(norway$pervote[norway$edate == "09/09/2013"] ~ norway$binary[norway$edate == "09/09/2013"])
+
+# T-test for 2018
+t_test_2018_n <- t.test(norway$pervote[norway$edate == "11/09/2017"] ~ norway$binary[norway$edate == "11/09/2017"])
+
+# Display t-test results
+print("T-test for 2014, Norway:")
+print(t_test_2014_n)
+
+print("\nT-test for 2018, Norway:")
+print(t_test_2018_n)
+
+denmark$binary <- ifelse(denmark$imm_pos>0, 1, 0)
+
+t_test_2014_d <- t.test(denmark$pervote[denmark$edate == "18/06/2015"] ~ denmark$binary[denmark$edate == "18/06/2015"])
+
+# T-test for 2018
+t_test_2018_d <- t.test(denmark$pervote[denmark$edate == "05/06/2019"] ~ denmark$binary[denmark$edate == "05/06/2019"])
+
+# Display t-test results
+print("T-test for 2014, Denmark:")
+print(t_test_2014_d)
+
+print("\nT-test for 2018, Denmark:")
+print(t_test_2018_d)
 ```
 
 
 ```{r}
-library(tidyverse)
-# Assuming your data is stored in a data frame named df
-# Replace 'df' with your actual data frame name
+#T-tests:
+#Sweden
+# Assuming imm_pos is a binary variable
+#t_test_2014_s <- t.test(rile ~ binary, data = sweden[sweden$edate == "14/09/2014", ])
+# T-test for 2018
+t_test_2018_s <- t.test(sweden$rile[sweden$edate == "09/09/2018"] ~ sweden$binary[sweden$edate == "09/09/2018"])
 
-sweden_pivot <- sweden %>%
-  select(partyname, edate, imm_pos) %>%
-  pivot_wider(names_from = edate, values_from = imm_pos)
+# Display t-test results
+print("T-test for 2014, Sweden: Not enough data")
+#print(t_test_2014_s)
 
-# Rename columns
-names(sweden_pivot) <-  c("partyname" = "Party",
-                          "14/09/2014" = "Pre", 
-                         "09/09/2018" = "Post")
+print("\nT-test for 2018, Sweden:")
+print(t_test_2018_s)
 
-norway_pivot <- norway %>%
-  select(partyname, edate, imm_pos) %>%
-  pivot_wider(names_from = edate, values_from = imm_pos)
+t_test_2014_n <- t.test(norway$rile[norway$edate == "09/09/2013"] ~ norway$binary[norway$edate == "09/09/2013"])
 
-names(norway_pivot) <-  c("partyname" = "Party",
-                          "09/09/2013" = "Pre", 
-                         "11/09/2017" = "Post")
+# T-test for 2018
+t_test_2018_n <- t.test(norway$rile[norway$edate == "11/09/2017"] ~ norway$binary[norway$edate == "11/09/2017"])
 
-denmark_pivot <- denmark %>%
-  select(partyname, edate, imm_pos) %>%
-  pivot_wider(names_from = edate, values_from = imm_pos)
+# Display t-test results
+print("T-test for 2014, Norway:")
+print(t_test_2014_n)
 
-names(denmark_pivot) <-  c("partyname" = "Party",
-                           "18/06/2015" = "Pre", 
-                         "05/06/2016" = "Post")
+print("\nT-test for 2018, Norway:")
+print(t_test_2018_n)
+
+t_test_2014_d <- t.test(denmark$rile[denmark$edate == "18/06/2015"] ~ denmark$binary[denmark$edate == "18/06/2015"])
+
+# T-test for 2018
+t_test_2018_d <- t.test(denmark$rile[denmark$edate == "05/06/2019"] ~ denmark$binary[denmark$edate == "05/06/2019"])
+
+# Display t-test results
+print("T-test for 2014, Denmark:")
+print(t_test_2014_d)
+
+print("\nT-test for 2018, Denmark:")
+print(t_test_2018_d)
 ```
 
 ```{r}
+#plotting
+sweden_2014 <- subset(sweden, edate == "14/09/2014")
+sweden_2018 <- subset(sweden, edate == "09/09/2018")
+
+norway_2013 <- subset(norway, edate == "09/09/2013")
+norway_2017 <- subset(norway, edate == "11/09/2017")
+
+denmark_2015 <- subset(denmark, edate == "18/06/2015")
+denmark_2019 <- subset(denmark, edate == "05/06/2019")
+
+# Load the ggplot2 library
 library(ggplot2)
 
-# Assuming df is your data frame
-# Replace 'df' with your actual data frame name
+# Create a scatter plot
+ggplot() +
+  geom_point(data=sweden_2014, aes(x = rile, y = imm_pos, color = partyname), alpha = 0.7) +
+  geom_point(data=sweden_2018, aes(x = rile, y = imm_pos, color = partyname), alpha = 0.7) +
 
-# Plotting
-ggplot(sweden_pivot, aes(x = Pre, y = Post, color = Party)) +
-  geom_point() +
-  labs(title = "Scatter Plot of Parties (pre vs post)",
-       x = "Pre",
-       y = "Post") +
+  # Add labels and title
+  labs(x = 'Left/Right positioning', y = 'Pos/Neg mentions', title = 'Sweden') +
+  
+  # Add legend
+  scale_color_discrete(name = 'Party') +
+
+  facet_grid(. ~ edate, scales = "free_x", space = "free_x") +
+  
+  # Customize plot appearance if needed
   theme_minimal()
+
+# Create a scatter plot
+ggplot() +
+  geom_point(data=norway_2013, aes(x = rile, y = imm_pos, color = partyname), alpha = 0.7) +
+  geom_point(data=norway_2017, aes(x = rile, y = imm_pos, color = partyname), alpha = 0.7) +
+
+  # Add labels and title
+  labs(x = 'Left/Right positioning', y = 'Pos/Neg mentions', title = 'Norway') +
+  
+  # Add legend
+  scale_color_discrete(name = 'Party') +
+
+  facet_wrap(~edate) +
+  
+  # Customize plot appearance if needed
+  theme_minimal()
+
+  ggplot() +
+  geom_point(data=denmark_2015, aes(x = rile, y = imm_pos, color = partyname), alpha = 0.7) +
+  geom_point(data=denmark_2019, aes(x = rile, y = imm_pos, color = partyname), alpha = 0.7) +
+
+  # Add labels and title
+  labs(x = 'Left/Right positioning', y = 'Pos/Neg mentions', title = 'Denmark') +
+  
+  # Add legend
+  scale_color_discrete(name = 'Party') +
+
+  facet_wrap(~edate) +
+  
+  # Customize plot appearance if needed
+  theme_minimal()
+
 ```
 
-```{r}
-library(ggplot2)
-
-# Assuming df1, df2, and df3 are your three data frames
-# Replace 'df1', 'df2', 'df3' with your actual data frame names
-
-# Combine the three data frames into one
-combined_df <- bind_rows(
-  mutate(sweden_pivot, table = "Sweden"),
-  mutate(norway_pivot, table = "Norway"),
-  mutate(denmark_pivot, table = "Denmark")
-)
-
-ggplot(combined_df, aes(x = Pre, y = Post, fill = as.factor(table))) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  labs(title = "Comparison of Parties Across Tables",
-       x = "Party",
-       y = "Value") +
-  theme_minimal()
-```
 
