@@ -1,0 +1,150 @@
+---
+title: "Untitled"
+author: "William Scheffler"
+date: '2023-12-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Data Cleaning**
+```{r}
+library(tidyverse)
+
+civica <- read.csv("manifesto.csv")
+
+# Create a separate dataframe for just Norway, Sweden and Denmark
+civica_subset <- dplyr::filter(civica, countryname == "Norway" | countryname == "Sweden" | countryname == "Denmark")
+
+# Identify target variables
+vars <- c("countryname", "date", "edate", "partyname", "partyabbrev", "per108", "per110", "per601", "per607", "per608", "per7062", "per601_2", "per602_2", "per607_2", "per608_2")
+
+# Select only variables of interest
+civica_subset <- civica_subset %>% select(all_of(vars))
+
+# Create separate datasets for each country for the sake of easy visualisation
+sweden <- dplyr::filter(civica_subset, countryname == "Sweden")
+denmark <- dplyr::filter(civica_subset, countryname == "Denmark")
+norway <- dplyr::filter(civica_subset, countryname == "Norway")
+
+# Create tidy tables for 'per601_2' for all three countries with dates, for only columns that don't have NA
+swedentable <- sweden %>% select(countryname, edate, partyname, partyabbrev, per601_2) %>% drop_na()
+denmarktable <- denmark %>% select(countryname, edate, partyname, partyabbrev, per601_2) %>% drop_na()
+norwaytable <- norway %>% select(countryname, edate, partyname, partyabbrev, per601_2) %>% drop_na()
+```
+
+The cell below creates a bar chart for the mean value of negative mentions of immigration using the data just before and just after the immigration crisis. It shows an increase in the negative mentions of immigration in Denmark and Sweden, but not in Norway. Denmark has the most negative mentions of immigration, but Sweden has the biggest magnitude of change across the time period.
+```{r}
+# Find the mean of all 'per601_2' values for each country
+mean(swedentable$per601_2)
+mean(denmarktable$per601_2)
+mean(norwaytable$per601_2)
+
+# Find the mean of all 'per601_2' values for each country, for each date
+den601_15 <- mean(denmarktable$per601_2[denmarktable$edate == "18/06/2015"])
+den601_19 <- mean(denmarktable$per601_2[denmarktable$edate == "05/06/2019"])
+
+nor601_13 <- mean(norwaytable$per601_2[norwaytable$edate == "09/09/2013"])
+nor601_17 <- mean(norwaytable$per601_2[norwaytable$edate == "11/09/2017"])
+
+swe601_14 <- mean(swedentable$per601_2[swedentable$edate == "14/09/2014"])
+swe601_18 <- mean(swedentable$per601_2[swedentable$edate == "09/09/2018"])
+
+mean601_2 <- data.frame(
+  mean_value = c(den601_15, den601_19, nor601_13, nor601_17, swe601_14, swe601_18),
+  stringsAsFactors = FALSE  # Ensures character vectors are not converted to factors
+)
+
+# Add the 'countries' and 'befaft' variables
+mean601_2$countries <- c("Denmark", "Denmark", "Norway", "Norway", "Sweden", "Sweden")
+mean601_2$before_or_after <- c("before", "after", "before", "after", "before", "after")
+
+# Print the resulting data frame
+print(mean601_2)
+
+# Create a bar chart using ggplot2 for the mean of all 'per601_2' values for each country
+immigrationplot <- ggplot(mean601_2, aes(x = countries, y = mean_value, fill = before_or_after)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Country", y = "Mean of 'per601_2' values", title = "Mean of 'per601_2' values, before and after immigration crisis") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+immigrationplot
+```
+
+For the most recent data in each country (as long as it is after 2015, plotting the relationship between political spectrum and negative mentions of immigration). Adding a line of best fit shows a positive correlation (as political parties were further to the right, they also tended to have more negative mentions of immigration).
+```{r}
+# Create a separate dataframe for just EU countries
+civica_eu <- dplyr::filter(civica, eumember == 10)
+
+# Extract the most recent dates for each country
+max_date_rows <- civica_eu %>%
+  group_by(countryname) %>%
+  filter(date == max(date))
+
+#per608_2 - against multiculturalism
+#per601_2 - advocating restriction of immigration
+#per608 - against multiculturalism
+anti_immig_vars <- c("countryname", "date", "edate", "partyname", "partyabbrev", "per608", "per601_2", "per608_1", "rile")
+max_date_rows <- max_date_rows %>% select(all_of(anti_immig_vars))
+
+# Drop rows if date is less than 201512
+max_date_rows <- max_date_rows %>% filter(date >= 201512)
+
+# Make a scatter plot where the x axis is 'rile' and the y axis is per601_2, coulored by country, with a line of best fit
+ggplot(max_date_rows, aes(x = rile, y = per601_2, colour = countryname)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Adding a line of best fit
+  ylim(0, 10) +  # Setting the y-axis limits
+  labs(x = "Left/Right Political Spectrum", y = "Prevalence of Negative Immigration Views", title = "Immigration Views and Political Spectrum") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Mapping spatial data, where darker values correspond to more anti-immigrant sentiments among political parties. 
+```{r}
+# Load package
+install.packages('rworldmap')
+library(grid)
+library(rworldmap)
+
+# Get the world map
+worldMap <- getMap()
+
+# Select countries of interest
+countries <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
+                   "Czech Rep.","Denmark","Estonia","Finland","France",
+                   "Germany","Greece","Hungary","Ireland","Italy","Latvia",
+                   "Lithuania","Netherlands","Poland",
+                   "Portugal","Romania","Slovakia","Slovenia","Spain",
+                   "Sweden","United Kingdom")
+
+# Select only the index of states member of the E.U.
+countries <- which(worldMap$NAME%in%countries)
+
+# Extract longitude and latitude border's coordinates of members states of E.U. 
+europecoordinates <- lapply(countries, function(i){
+  worlddata <- data.frame(worldMap@polygons[[i]]@Polygons[[1]]@coords)
+  worlddata$region =as.character(worldMap$NAME[i])
+  colnames(worlddata) <- list("long", "lat", "region")
+  return(worlddata)
+})
+
+europecoordinates <- do.call("rbind", europecoordinates)
+
+mean_per601_2 <- max_date_rows %>%
+  group_by(countryname) %>%
+  summarise(mean_per601_2 = mean(per601_2))
+
+# Merge the data frames based on the 'region' and 'countryname' columns
+europecoordinates <- merge(europecoordinates, mean_per601_2, by.x = "region", by.y = "countryname", all.x = TRUE)
+
+# Plot the map
+ggplot(data = europecoordinates) +
+  geom_polygon(aes(x = long, y = lat, group = region, fill = mean_per601_2), color = "white", size = 0.3) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Mean of Anti-Immigrant Manifesto Mentions") +
+  coord_map() +
+  labs(title = "Anti-Immigrant Views of Parties in Europe") +  # Adding a title
+  theme_void() +
+  theme(legend.position = "right")
+```
