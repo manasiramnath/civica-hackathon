@@ -42,36 +42,39 @@ n <- civica_subset %>% subset(countryname == "Norway" & year>2012)
 
 
 library(ggplot2)
+library(ggplot2)
 # Save Sweden plot
 sweden_plot <- ggplot(s, aes(x = partyname, y = rile, fill = factor(year))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Swedish Parties in 2014 and 2018", subtitle = "Social Democratic Labour Party had highest % of votes both years") +
+  labs(x = "Party", y = "Left-Right Score", title = "Right-Left Score in Swedish Parties", subtitle = "Social Democratic Labour Party had highest % of votes both years") +
   scale_fill_manual(values = c("2014" = "lightblue", "2018" = "purple"), name="Year") +  # Customizing fill colors
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  coord_flip()
 
 # Save Denmark plot
 denmark_plot <- ggplot(d, aes(x = partyname, y = rile, fill = factor(year))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Danish Parties in 2015 and 2019", subtitle = "Social Democratic Party had highest % of votes both years") +
+  labs(x = "Party", y = "Left-Right Score", title = "Right-Left Score in Danish Parties", subtitle = "Social Democratic Party had highest % of votes both years") +
   scale_fill_manual(values = c("2015" = "lightblue", "2019" = "purple"), name="Year") +  # Customizing fill colors
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  coord_flip()
 
 # Save Norway plot
 norway_plot <- ggplot(n, aes(x = partyname, y = rile, fill = factor(year))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Norwegian Parties in 2015 and 2019", subtitle = "Labour Party had highest % of votes both years") +
+  labs(x = "Party", y = "Left-Right Score", title = "Right-Left Score in Norwegian Parties", subtitle = "Labour Party had highest % of votes both years") +
   scale_fill_manual(values = c("2013" = "lightblue", "2017" = "purple"), name="Year") +  # Customizing fill colors
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  coord_flip()
 
-# Save Sweden plot as JPEG
-ggsave("sweden_plot.jpeg", plot = sweden_plot, width = 8, height = 6, dpi = 300)
-ggsave("denmark_plot.jpeg", plot = denmark_plot, width = 8, height = 6, dpi = 300)
-ggsave("norway_plot.jpeg", plot = norway_plot, width = 8, height = 6, dpi = 300)
+# Save plots as JPEG
+ggsave("sweden_plot.jpeg", plot = sweden_plot, width = 6, height = 8, dpi = 300)
+ggsave("denmark_plot.jpeg", plot = denmark_plot, width = 6, height = 8, dpi = 300)
+ggsave("norway_plot.jpeg", plot = norway_plot, width = 6, height = 8, dpi = 300)
 
 ```
+
+
 
 per108: EuropeanCommunity/Union:Positive
 per110: EuropeanCommunity/Union:Negative
@@ -81,6 +84,82 @@ per602_2: NationalWayofLife: Immigration:Positive
 
 per607_2: Multiculturalism: ImmigrantsDiversity
 per608_2: Multiculturalism: ImmigrantsAssimilation
+
+
+```{r}
+library(ggpubr)
+library(ggplot2)
+library(gridExtra)
+
+# Find the common y-axis limits
+common_y_limits <- range(c(subset(c, post == 0 & per608_2 != 0)$per608_2, subset(c, post == 1 & per608_2 != 0)$per608_2))
+
+# Create scatter plots
+plot_post_0 <- ggplot(subset(c, post == 0 & per608_2 != 0), aes(x = partyname, y = per608_2, color = countryname)) +
+  geom_point(size = 3) +
+  labs(x = "Before Policy", y = "% Mentions of Assimilation") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), panel.grid = element_blank()) +
+  scale_color_manual(values = c("Sweden" = "darkorange", "Denmark" = "darkred", "Norway" = "darkblue")) +
+  facet_wrap(~countryname, scales = "free_x", ncol = 3) +
+  theme(legend.position = "none") +  # Remove legend
+  ylim(common_y_limits)  # Set y-axis limits
+
+plot_post_1 <- ggplot(subset(c, post == 1 & per608_2 != 0), aes(x = partyname, y = per608_2, color = countryname)) +
+  geom_point(size = 3) +
+  labs(x = "After Policy", y = "% Mentions of Assimilation") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), axis.title.y = element_blank(), panel.grid = element_blank()) +
+  scale_color_manual(values = c("Sweden" = "darkorange", "Denmark" = "darkred", "Norway" = "darkblue")) +
+  facet_wrap(~countryname, scales = "free_x", ncol = 3) +
+  ylim(common_y_limits)  # Set y-axis limits
+
+
+# Arrange both plots and add an overarching title
+ggarrange(
+  plot_post_0 + ggtitle("% Statements on Assimilation"),
+  plot_post_1,
+  ncol = 2,
+  common.legend = TRUE,
+  align = "hv"
+)
+```
+
+```{r}
+# Find the common y-axis limits
+common_y_limits <- range(c(subset(c, post == 0 & per601_2 != 0)$per601_2, subset(c, post == 1 & per601_2 != 0)$per601_2))
+
+# Create scatter plots
+plot_post_0 <- ggplot(subset(c, post == 0 & per601_2 != 0), aes(x = partyname, y = per601_2, color = countryname)) +
+  geom_point(size = 3) +
+  labs(x = "Before Policy", y = "% Negative") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), panel.grid = element_blank()) +
+  scale_color_manual(values = c("Sweden" = "darkorange", "Denmark" = "darkred", "Norway" = "darkblue")) +
+  facet_wrap(~countryname, scales = "free_x", ncol = 3) +
+  theme(legend.position = "none") +  # Remove legend
+  ylim(common_y_limits)  # Set y-axis limits
+
+plot_post_1 <- ggplot(subset(c, post == 1 & per601_2 != 0), aes(x = partyname, y = per601_2, color = countryname)) +
+  geom_point(size = 3) +
+  labs(x = "After Policy", y = "% Negative") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), axis.title.y = element_blank(), panel.grid = element_blank()) +
+  scale_color_manual(values = c("Sweden" = "darkorange", "Denmark" = "darkred", "Norway" = "darkblue")) +
+  facet_wrap(~countryname, scales = "free_x", ncol = 3) +
+  ylim(common_y_limits)  # Set y-axis limits
+
+
+# Arrange both plots and add an overarching title
+ggarrange(
+  plot_post_0 + ggtitle("% Negative Statements on Immigration"),
+  plot_post_1,
+  ncol = 2,
+  common.legend = TRUE,
+  align = "hv"
+)
+```
+
 
 
 ```{r}
@@ -135,7 +214,7 @@ summary(m5)
 ```{r}
 library(stargazer)
 variable_names <- c("EU (Positive)", "EU (Negative)", "Immigration (Negative)", "Immigration (Positive)", "Integration", "Assimilation", "Post Policy",
-                    "EU (Positive)*Post", "EU (Negative)*Post", "Immigration (Negative)*Post", "Immigration (Positive)*Post", "Integration*Post", "Assimilation*Post"
+                    "EU (Positive)*Post", "EU (Negative)*Post", "Immigration (Negative)*Post", "Immigration (Positive)*Post", "Diversity*Post", "Assimilation*Post"
                     )
 stargazer(m1,m2,m3,m4,m5, out = "regression_output.html", type = "html", covariate.labels = variable_names)
 
