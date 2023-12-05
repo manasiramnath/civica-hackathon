@@ -42,28 +42,35 @@ n <- civica_subset %>% subset(countryname == "Norway" & year>2012)
 
 
 library(ggplot2)
-# Sweden
-ggplot(s, aes(x = partyname, y = rile, fill = factor(year))) +
+# Save Sweden plot
+sweden_plot <- ggplot(s, aes(x = partyname, y = rile, fill = factor(year))) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Swedish Parties in 2014 and 2018", subtitle = "Social Democratic Labour Party had highest % of votes both years") +
   scale_fill_manual(values = c("2014" = "lightblue", "2018" = "purple"), name="Year") +  # Customizing fill colors
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Denmark
-ggplot(d, aes(x = partyname, y = rile, fill = factor(year))) +
+
+# Save Denmark plot
+denmark_plot <- ggplot(d, aes(x = partyname, y = rile, fill = factor(year))) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Danish Parties in 2015 and 2019", subtitle = "Social Democratic Party had highest % of votes both years") +
   scale_fill_manual(values = c("2015" = "lightblue", "2019" = "purple"), name="Year") +  # Customizing fill colors
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# Norway
-ggplot(n, aes(x = partyname, y = rile, fill = factor(year))) +
+# Save Norway plot
+norway_plot <- ggplot(n, aes(x = partyname, y = rile, fill = factor(year))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Norweigan Parties in 2015 and 2019", subtitle = "Labour Party had highest % of votes both years") +
+  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Norwegian Parties in 2015 and 2019", subtitle = "Labour Party had highest % of votes both years") +
   scale_fill_manual(values = c("2013" = "lightblue", "2017" = "purple"), name="Year") +  # Customizing fill colors
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Save Sweden plot as JPEG
+ggsave("sweden_plot.jpeg", plot = sweden_plot, width = 8, height = 6, dpi = 300)
+ggsave("denmark_plot.jpeg", plot = denmark_plot, width = 8, height = 6, dpi = 300)
+ggsave("norway_plot.jpeg", plot = norway_plot, width = 8, height = 6, dpi = 300)
+
 ```
 
 per108: EuropeanCommunity/Union:Positive
@@ -93,6 +100,8 @@ m1 <- plm(pervote ~ per108 + per110 +
                  index = c("partyname", "year"),
                  model = "within")
 
+summary(m1)
+
 # European Community/Union: Positive and Negative
 m2 <- plm(pervote ~ per108 + per110 + post*(per108 + per110),
                  data = c,
@@ -114,6 +123,12 @@ m4 <- plm(pervote ~ per607_2 + per608_2 + post*(per607_2 + per608_2),
                  index = c("partyname", "year"),
                  model = "within")
 summary(m4)
+
+m5 <- plm(pervote ~ per601_2 + post*per601_2,
+                 data = c,
+                 index = c("partyname", "year"),
+                 model = "within")
+summary(m5)
 ```
 
 
@@ -122,9 +137,11 @@ library(stargazer)
 variable_names <- c("EU (Positive)", "EU (Negative)", "Immigration (Negative)", "Immigration (Positive)", "Integration", "Assimilation", "Post Policy",
                     "EU (Positive)*Post", "EU (Negative)*Post", "Immigration (Negative)*Post", "Immigration (Positive)*Post", "Integration*Post", "Assimilation*Post"
                     )
-stargazer(m1,m2,m3,m4, out = "regression_output.html", type = "html", covariate.labels = variable_names)
+stargazer(m1,m2,m3,m4,m5, out = "regression_output.html", type = "html", covariate.labels = variable_names)
 
 ```
+
+
 
 
 
