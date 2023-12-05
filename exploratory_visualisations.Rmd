@@ -35,6 +35,45 @@ denmarktable <- denmark %>% select(countryname, edate, partyname, partyabbrev, p
 norwaytable <- norway %>% select(countryname, edate, partyname, partyabbrev, per601_2) %>% drop_na()
 ```
 
+```{r}
+sweden$sentiment_mentions <- (sweden$per607 - sweden$per608)
+norway$sentiment_mentions <- (norway$per607 - norway$per608)
+denmark$sentiment_mentions <- (denmark$per607 - denmark$per608)
+
+sweden_filtered <- dplyr::filter(sweden, date >= "200209" & date <= "201809")
+
+
+
+
+ggplot(sweden_filtered, aes(x = date, y = sentiment_mentions, color = partyname)) +
+  geom_path() +
+  labs(title = "Sentiment of multiculturalism mentions by Party in Sweden",
+       x = "Year",
+       y = "Sentiment of multiculturalism mentions",
+       color = "Party") +
+  theme_minimal()
+
+norway_filtered <- dplyr::filter(norway, date >= "200209" & date <= "201809")
+
+ggplot(norway_filtered, aes(x = date, y = sentiment_mentions, color = partyname)) +
+  geom_path() +
+  labs(title = "Sentiment of multiculturalism mentions by Party in Norway",
+       x = "Year",
+       y = "Sentiment of multiculturalism mentions",
+       color = "Party") +
+  theme_minimal()
+
+denmark_filtered <- dplyr::filter(denmark, date >= "200209" & date <= "201809")
+
+ggplot(denmark_filtered, aes(x = date, y = sentiment_mentions, color = partyname)) +
+  geom_path() +
+  labs(title = "Sentiment of multiculturalism mentions by Party in Denmark",
+       x = "Year",
+       y = "Sentiment of multiculturalism mentions",
+       color = "Party") +
+  theme_minimal()
+```
+
 The cell below creates a bar chart for the mean value of negative mentions of immigration using the data just before and just after the immigration crisis. It shows an increase in the negative mentions of immigration in Denmark and Sweden, but not in Norway. Denmark has the most negative mentions of immigration, but Sweden has the biggest magnitude of change across the time period.
 ```{r}
 # Find the mean of all 'per601_2' values for each country
