@@ -1,0 +1,130 @@
+---
+title: "manafesto"
+output: html_document
+date: "2023-12-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+# install.packages("lubridate")
+library(lubridate)
+
+civica <- read.csv("manifesto.csv")
+
+# Create a separate dataframe for just Norway, Sweden and Denmark
+civica_subset <- dplyr::filter(civica, countryname == "Norway" | countryname == "Sweden" | countryname == "Denmark")
+
+# Identify target variables
+vars <- c("countryname", "date", "edate", "partyname", "partyabbrev", "pervote", "per108", "per110", "per601", "per607", "per608", "per7062", "per601_2", "per602_2", "per607_2", "per608_2","rile")
+
+# Select only variables of interest
+civica_subset <- civica_subset %>% select(all_of(vars))
+
+# Creating year variable
+civica_subset$edate <- as.Date(civica_subset$edate, format = "%d/%m/%Y")
+civica_subset$year <- year(civica_subset$edate)
+
+# Change party abbrev to factor variable
+civica_subset$partyname <- as.factor(civica_subset$partyname)
+```
+
+## Visualising right-left score before and after migration crisis
+```{r}
+# Subset dataset to only Sweden
+s <- civica_subset %>% subset(countryname == "Sweden" & year>2012)
+d <- civica_subset %>% subset(countryname == "Denmark" & year>2012)
+n <- civica_subset %>% subset(countryname == "Norway" & year>2012)
+
+
+library(ggplot2)
+# Sweden
+ggplot(s, aes(x = partyname, y = rile, fill = factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Swedish Parties in 2014 and 2018", subtitle = "Social Democratic Labour Party had highest % of votes both years") +
+  scale_fill_manual(values = c("2014" = "lightblue", "2018" = "purple"), name="Year") +  # Customizing fill colors
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Denmark
+ggplot(d, aes(x = partyname, y = rile, fill = factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Danish Parties in 2015 and 2019", subtitle = "Social Democratic Party had highest % of votes both years") +
+  scale_fill_manual(values = c("2015" = "lightblue", "2019" = "purple"), name="Year") +  # Customizing fill colors
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Norway
+ggplot(n, aes(x = partyname, y = rile, fill = factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Party", y = "Right-Left Score", title = "Right-Left Score in Norweigan Parties in 2015 and 2019", subtitle = "Labour Party had highest % of votes both years") +
+  scale_fill_manual(values = c("2013" = "lightblue", "2017" = "purple"), name="Year") +  # Customizing fill colors
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+per108: EuropeanCommunity/Union:Positive
+per110: EuropeanCommunity/Union:Negative
+
+per601_2: NationalWayofLife: Immigration:Negative
+per602_2: NationalWayofLife: Immigration:Positive
+
+per607_2: Multiculturalism: ImmigrantsDiversity
+per608_2: Multiculturalism: ImmigrantsAssimilation
+
+
+```{r}
+library(plm)
+
+# Subset to years of interest
+c <- civica_subset %>% subset(year>2012)
+
+# Create variable "post" for whether manifesto was pre or post migration crisis
+c$post <- ifelse(c$year>2015,1,0)
+
+# Maximal model
+m1 <- plm(pervote ~ per108 + per110 + 
+                 per601_2 + per602_2 + per607_2 + per608_2 + 
+                 post*(per108 + per110 + per601_2 + per602_2 + per607_2 + per608_2),
+                 data = c,
+                 index = c("partyname", "year"),
+                 model = "within")
+
+# European Community/Union: Positive and Negative
+m2 <- plm(pervote ~ per108 + per110 + post*(per108 + per110),
+                 data = c,
+                 index = c("partyname", "year"),
+                 model = "within")
+summary(m2)
+
+
+# National Way of Life: Positive and Negative attitudes towards immigration
+m3 <- plm(pervote ~ per601_2 + per602_2 + post*(per601_2 + per602_2),
+                 data = c,
+                 index = c("partyname", "year"),
+                 model = "within")
+summary(m3)
+
+# Multiculturalism: Immigrants should retain their culture vs assimilate
+m4 <- plm(pervote ~ per607_2 + per608_2 + post*(per607_2 + per608_2),
+                 data = c,
+                 index = c("partyname", "year"),
+                 model = "within")
+summary(m4)
+```
+
+
+```{r}
+library(stargazer)
+variable_names <- c("EU (Positive)", "EU (Negative)", "Immigration (Negative)", "Immigration (Positive)", "Integration", "Assimilation", "Post Policy",
+                    "EU (Positive)*Post", "EU (Negative)*Post", "Immigration (Negative)*Post", "Immigration (Positive)*Post", "Integration*Post", "Assimilation*Post"
+                    )
+stargazer(m1,m2,m3,m4, out = "regression_output.html", type = "html", covariate.labels = variable_names)
+
+```
+
+
+
